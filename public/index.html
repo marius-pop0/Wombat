@@ -8,17 +8,16 @@
   </head>
   <body>
   <div class="container">
-    <div class="row">
-      <div class="panel panel-default">
+    <div class="row" style="padding: 10px;" >
+      <div class="panel panel-default col-md-2">
         <div class="panel-heading">
           <h4 class="MyUsername" id="MyUsername">
-
           </h4>
         </div>
         <table id="scroll_table" class="table table-fixed">
           <thead>
           <tr>
-            <th class="col-xs-8">Online Users</th>
+            <th>Online Users</th>
           </tr>
           </thead>
           <tbody class="publicUsers" id="publicUsers">
@@ -26,20 +25,28 @@
           </tbody>
         </table>
       </div>
+        <div class="panel panel-default col-md-10">
+          <div class="panel-heading">
+            <h4>Chat</h4>
+          </div>
+          <table class="table table-fixed">
+            <tbody class="publicChat" id="publicChat">
+
+            </tbody>
+          </table>
+        </div>
+        <!--<ul class="publicChat" id="publicChat"></ul>-->
     </div>
   </div>
 
 
   <div class="container">
-    <div class="col-md-8">
-      <ul class="publicChat" id="publicChat"></ul>
       <form action="">
         <label>Enter Message</label>
         <textarea class="form-control" id="message"></textarea>
         <br />
         <input id="submit" autocomplete="off" type="submit" class="btn btn-primary" value="Send Message"/>
       </form>
-    </div>
   </div>
 
 
@@ -49,5 +56,8 @@
        crossorigin="anonymous"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/client.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+
   </body>
 </html>
