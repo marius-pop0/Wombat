@@ -6,6 +6,8 @@ var port = process.env.PORT || 3000;
 var connections = [];
 var users = [];
 var css="";
+var messageCount=0;
+var messages=[];
 
 http.listen( port, function () {
     console.log('listening on port', port);
@@ -25,6 +27,8 @@ io.on('connection', function(socket){
         userCounter+=1;
         user="user"+userCounter;
     }
+    socket.emit('getCookie',"cook");
+
     socket.username=user;
     users.push(user);
 
@@ -35,41 +39,86 @@ io.on('connection', function(socket){
     updateConnectedUsers();
     console.log('Connected users %s',users);
 
+    //get log history on connect
+    socket.emit('sendHistory',messages);
 
+
+
+    socket.on('cookie',function(data){
+        var cook = data.split('.');
+        if(users.indexOf(cook[0])===-1) {
+            //update username when cookie is available
+            users.splice(users.indexOf(socket.username),1);
+            socket.username=cook[0];
+            users.push(cook[0]);
+            console.log("used cookie update username "+cook[0]);
+            socket.emit('update username',socket.username);
+            updateConnectedUsers();
+
+            //update css when cookie has data
+            if(cook[1].length!=0){
+                css=css+"."+socket.username+"{"+cook[1]+";}";
+                io.emit('cssUpdate', css);
+                console.log("used cookie update css "+cook[1]);
+            }
+        }
+        else{
+            console.log("could not update from cookie: username taken")
+        }
+    });
 
     socket.on('disconnect',function(data){
         if (!socket.username) return;
 
         //remove username from active list
         users.splice(users.indexOf(socket.username),1);
+        //update active connections for the rest of the users
         updateConnectedUsers();
         connections.splice(connections.indexOf(socket),1);
         console.log('Disconnected: %s sockets connected', connections.length);
     });
 
+    //send the messages to all connected users
     socket.on('chat', function(data){
         var timeNow = new Date().toLocaleTimeString();
         io.emit('chat', {msg: data, user: socket.username, time: timeNow});
     });
 
+    socket.on('log',function (data) {
+        //store 200 messages in memory
+       if(messageCount<200){
+           messageCount+=1;
+           //dont log duplicate messages
+           if(data!=messages[messages.length-1]){
+               messages.push(data);
+           }
+
+       }
+       else{
+           messages.splice(0,1);
+           if(data!=messages[messages.length-1]){
+               messages.push(data);
+           }
+       }
+    });
     //New User
     socket.on('new users',function(data){
-
-        users.splice(users.indexOf(socket.username),1);
-
-        socket.username = data;
         if(users.indexOf(data)===-1) {
+            users.splice(users.indexOf(socket.username),1);
+
+            socket.username = data;
             users.push(socket.username);
             console.log('Connected users %s',users);
 
             socket.emit('update username',socket.username);
             var usercolor = getUsercolor(socket.username);
             socket.emit('saveCookie',{username: socket.username, color: usercolor});
+            updateConnectedUsers()
         }
         else{
-            console.log('usersname taken')
+            console.log('username taken')
         }
-        updateConnectedUsers()
+
     });
     
     function updateConnectedUsers() {
@@ -77,9 +126,12 @@ io.on('connection', function(socket){
     }
     function getUsercolor(name){
         var tmp = css.trim().split(name);
-        console.log(tmp[tmp.length-1]);
-
-        return "red";
+        if (tmp.length>1){
+            return tmp[tmp.length-1].substr(1,23);
+        }
+        else{
+            return "";
+        }
     }
 
     socket.on('nickcolor',function(data){
